@@ -85,8 +85,8 @@ graph TD
 ### Automated Installation
 
 ```bash
-git clone https://github.com/g4sk0/mergen-mcp.git
-cd mergen-mcp
+git clone https://github.com/g4sk0/-mcp.git
+cd -mcp
 sudo bash install.sh
 ```
 
@@ -100,7 +100,7 @@ sudo bash install.sh
 ### Manual Installation
 
 ```bash
-git clone https://github.com/g4sk0/mergen.git
+git clone https://github.com/g4sk0/mergen-mcp.git
 cd mergen-mcp
 
 python3 -m venv venv
