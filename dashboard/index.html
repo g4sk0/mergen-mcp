@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MERGEN — Arsenal</title>
+  <style>
+    /* ── Reset ── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ── Arsenal Color Palette ── */
+    :root {
+      --bg: #0a0c10;
+      --panel: #111318;
+      --border: #1e2330;
+      --text: #c9d1d9;
+      --muted: #4a5568;
+      --accent: #58a6ff;
+      --p1: #ff4444;
+      --p2: #ff8c42;
+      --p3: #ffd700;
+      --p4: #58a6ff;
+      --done: #3fb950;
+      --font-code: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      --font-ui: system-ui, -apple-system, sans-serif;
+    }
+
+    /* ── Base ── */
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 1280px;
+    }
+
+    code,
+    .mono {
+      font-family: var(--font-code);
+    }
+
+    /* ── Scrollbars ── */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+
+    /* ── Pulse animation ── */
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 0.4;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .pulse-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--done);
+      box-shadow: 0 0 6px var(--done);
+      animation: pulse 1.4s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 0 18px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      font-family: var(--font-code);
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 2px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .mode-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-left: 10px;
+      vertical-align: middle;
+      border: 1px solid currentColor;
+      cursor: default;
+    }
+    .mode-badge.hidden { display: none; }
+    .mode-ctf     { color: #f97316; border-color: #f97316; background: rgba(249,115,22,0.12); }
+    .mode-pentest { color: #ef4444; border-color: #ef4444; background: rgba(239,68,68,0.12); }
+    .mode-bb      { color: #3b82f6; border-color: #3b82f6; background: rgba(59,130,246,0.12); }
+    .mode-default { color: #6b7280; border-color: #6b7280; background: rgba(107,114,128,0.12); }
+
+    .conn-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .conn-dot.live {
+      background: var(--done);
+      box-shadow: 0 0 6px var(--done);
+    }
+
+    .conn-dot.dead {
+      background: var(--p1);
+    }
+
+
+    #activeIndicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-code);
+      font-size: 11px;
+      color: var(--done);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 0;
+      max-width: 340px;
+    }
+
+    #activeIndicator.hidden {
+      display: none;
+    }
+
+    #activeText {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Main layout ── */
+    main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── Left panel ── */
+    aside#leftPanel {
+      width: 300px;
+      min-width: 260px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Section headers ── */
+    .section-hdr {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-code);
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-hdr-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--font-code);
+      font-size: 9px;
+      letter-spacing: 1px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .section-hdr-btn:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* ── Operations section ── */
+    #operationsPanel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+      min-height: 120px;
+    }
+
+    #operationsList {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px;
+    }
+
+    /* ── Operation cards ── */
+    .op-card {
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      border-left-width: 3px;
+    }
+
+    .op-card:hover {
+      border-color: var(--muted);
+      background: rgba(88, 166, 255, 0.04);
+    }
+
+    .op-card.selected {
+      border-color: var(--accent);
+      background: rgba(88, 166, 255, 0.07);
+    }
+
+    .op-card-hist {
+      opacity: 0.72;
+    }
+
+    .op-card.status-running {
+      border-left-color: var(--done);
+    }
+
+    .op-card.status-done {
+      border-left-color: var(--done);
+      opacity: 0.85;
+    }
+
+    .op-card.status-failed {
+      border-left-color: var(--p1);
+    }
+
+    .op-card.status-killed {
+      border-left-color: var(--p2);
+    }
+
+    .op-card.status-queued {
+      border-left-color: var(--border);
+    }
+
+    .op-card.status-hist {
+      border-left-color: var(--muted);
+      opacity: 0.8;
+    }
+
+    .oc-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 3px;
+      gap: 6px;
+    }
+
+    .oc-tool {
+      font-family: var(--font-code);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .oc-target {
+      font-family: var(--font-code);
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .oc-meta {
+      font-size: 10px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* status badges */
+    .status-badge {
+      font-family: var(--font-code);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 2px 5px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .sb-running {
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--done);
+    }
+
+    .sb-done {
+      background: rgba(63, 185, 80, 0.12);
+      color: var(--done);
+    }
+
+    .sb-failed {
+      background: rgba(255, 68, 68, 0.12);
+      color: var(--p1);
+    }
+
+    .sb-killed {
+      background: rgba(255, 140, 66, 0.12);
+      color: var(--p2);
+    }
+
+    .sb-queued {
+      background: rgba(30, 35, 48, 0.8);
+      color: var(--muted);
+    }
+
+    /* ── Memory section ── */
+    #memoryPanel {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      max-height: 180px;
+      overflow: hidden;
+    }
+
+    #memoryList {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px;
+    }
+
+    .memory-item {
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      margin-bottom: 4px;
+      font-size: 11px;
+    }
+
+    .memory-item .mi-target {
+      font-family: var(--font-code);
+      color: var(--text);
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .memory-item .mi-meta {
+      color: var(--muted);
+      font-size: 10px;
+      margin-top: 2px;
+    }
+
+    .memory-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 2px 4px;
+    }
+
+    /* ── Right panel ── */
+    section#rightPanel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    /* ── Session header ── */
+    #sessionHeader {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      background: var(--panel);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 42px;
+    }
+
+    .sh-title {
+      font-family: var(--font-code);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sh-meta {
+      font-size: 11px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    /* ── Steps timeline ── */
+    #stepsList {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 16px;
+      min-height: 80px;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 10px;
+      border-left: 3px solid var(--border);
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 6px;
+      background: var(--panel);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .step-item:hover {
+      background: rgba(88, 166, 255, 0.04);
+    }
+
+    .step-item.step-running {
+      border-left-color: var(--done);
+    }
+
+    .step-item.step-done {
+      border-left-color: var(--done);
+    }
+
+    .step-item.step-failed {
+      border-left-color: var(--p1);
+    }
+
+    .step-item.step-error {
+      border-left-color: var(--p1);
+    }
+
+    .step-item.step-killed {
+      border-left-color: var(--p2);
+    }
+
+    .step-item.step-pending {
+      border-left-color: var(--border);
+    }
+
+    .step-icon {
+      width: 18px;
+      text-align: center;
+      font-size: 12px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-icon .pulse-dot {
+      width: 7px;
+      height: 7px;
+    }
+
+    .step-icon-done {
+      color: var(--done);
+    }
+
+    .step-icon-failed {
+      color: var(--p1);
+    }
+
+    .step-icon-killed {
+      color: var(--p2);
+    }
+
+    .step-icon-pending {
+      color: var(--muted);
+    }
+
+    .step-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .step-tool {
+      font-family: var(--font-code);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .step-target {
+      font-family: var(--font-code);
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 1px;
+    }
+
+    .step-meta {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* expanded output area */
+    .step-output {
+      display: none;
+      margin-top: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 8px 10px;
+      font-family: var(--font-code);
+      font-size: 11px;
+      line-height: 1.6;
+      max-height: 420px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: var(--muted);
+    }
+
+    .step-output.open {
+      display: block;
+    }
+
+    /* Running job output gets a subtle green left border to signal live activity */
+    .step-running .step-output.open {
+      border-left: 2px solid var(--done);
+      color: var(--text);
+    }
+
+    /* ── Findings panel ── */
+    #findingsPanel {
+      flex-shrink: 0;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      max-height: 280px;
+      overflow: hidden;
+    }
+
+    #findingsList {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 14px;
+    }
+
+    .finding-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .finding-item:last-child {
+      border-bottom: none;
+    }
+
+    /* severity badges */
+    .sev-badge {
+      font-family: var(--font-code);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 2px 6px;
+      border-radius: 2px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      color: #0a0c10;
+      margin-top: 1px;
+    }
+
+    .sev-p1 {
+      background: var(--p1);
+    }
+
+    .sev-p2 {
+      background: var(--p2);
+    }
+
+    .sev-p3 {
+      background: var(--p3);
+    }
+
+    .sev-p4 {
+      background: var(--p4);
+    }
+
+    .finding-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .finding-title {
+      font-size: 12px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .finding-meta {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── Empty states ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-family: var(--font-code);
+      text-align: center;
+    }
+
+    .empty-state .es-icon {
+      font-size: 22px;
+      opacity: 0.35;
+    }
+
+    /* ── Utility ── */
+    .hidden {
+      display: none !important;
+    }
+
+    /* ── Section count badge ── */
+    .section-count {
+      font-family: var(--font-code); font-size: 10px;
+      color: var(--accent); letter-spacing: 0;
+    }
+
+    /* ── Collapsible session history ── */
+    .section-hdr-toggle { cursor: pointer; user-select: none; }
+    .section-hdr-toggle:hover { color: var(--text); }
+    #sessionHistoryList.collapsed { display: none; }
+
+    /* ── Active tools panel ── */
+    #activeToolsPanel {
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    #activeToolsList { padding: 6px; }
+
+    /* ── Active tool card ── */
+    .at-card {
+      padding: 9px 11px;
+      border: 1px solid rgba(63,185,80,0.35);
+      border-left: 3px solid var(--done);
+      border-radius: 4px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      background: rgba(63,185,80,0.06);
+      box-shadow: -3px 0 10px rgba(63,185,80,0.2);
+      transition: background 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+    .at-card:hover {
+      background: rgba(63,185,80,0.1);
+      box-shadow: -3px 0 14px rgba(63,185,80,0.3);
+    }
+    .at-card.selected {
+      background: rgba(63,185,80,0.13);
+      border-color: var(--done);
+    }
+    .at-top {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 6px; margin-bottom: 3px;
+    }
+    .at-tool {
+      font-family: var(--font-code); font-size: 12px;
+      font-weight: 800; color: var(--done); letter-spacing: 1px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .at-elapsed {
+      font-family: var(--font-code); font-size: 10px;
+      color: var(--muted); flex-shrink: 0;
+    }
+    .at-target {
+      font-family: var(--font-code); font-size: 10px;
+      color: var(--muted); white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 5px;
+    }
+    .at-kill {
+      background: none;
+      border: 1px solid rgba(255,68,68,0.3);
+      color: rgba(255,68,68,0.6);
+      font-family: var(--font-code); font-size: 9px;
+      padding: 1px 5px; border-radius: 2px; cursor: pointer;
+      flex-shrink: 0; line-height: 1.4;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .at-kill:hover {
+      color: var(--p1); border-color: var(--p1);
+      background: rgba(255,68,68,0.08);
+    }
+
+    /* Indeterminate progress bar */
+    .at-progress {
+      height: 2px; background: rgba(63,185,80,0.15);
+      border-radius: 1px; overflow: hidden; margin-top: 2px;
+    }
+    .at-progress-bar {
+      height: 100%; width: 35%;
+      background: var(--done);
+      border-radius: 1px;
+      animation: atProgressAnim 1.6s ease-in-out infinite;
+    }
+    @keyframes atProgressAnim {
+      0%   { transform: translateX(-200%); opacity: 0.7; }
+      50%  { opacity: 1; }
+      100% { transform: translateX(400%); opacity: 0.7; }
+    }
+  /* ── Job Focus Mode ── */
+  #jobFocusContainer {
+    display: flex; flex-direction: column;
+    flex: 1; overflow: hidden; min-height: 0;
+  }
+  #jobFocusHeader {
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(63,185,80,0.05);
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0; min-height: 42px;
+  }
+  .jfh-tool {
+    font-size: 12px; font-weight: 800;
+    color: var(--done); letter-spacing: 1px;
+  }
+  .jfh-arrow { color: var(--muted); font-size: 12px; }
+  .jfh-target {
+    font-size: 11px; color: var(--text);
+    flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .jfh-meta {
+    font-family: var(--font-code); font-size: 10px;
+    color: var(--muted); flex-shrink: 0;
+  }
+  .jfh-close {
+    background: none; border: 1px solid var(--border);
+    color: var(--muted); font-size: 14px; line-height: 1;
+    width: 22px; height: 22px; border-radius: 3px;
+    cursor: pointer; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .jfh-close:hover { color: var(--text); border-color: var(--muted); }
+
+  #jobFocusOutput {
+    flex: 1; overflow-y: auto; padding: 10px 16px;
+    font-size: 11px; line-height: 1.65;
+    white-space: pre-wrap; word-break: break-all;
+    color: var(--muted);
+  }
+  /* Output line color coding */
+  #jobFocusOutput .out-info  { color: var(--accent); }
+  #jobFocusOutput .out-warn  { color: var(--p3); }
+  #jobFocusOutput .out-err   { color: var(--p1); }
+  #jobFocusOutput .out-done  { color: var(--done); }
+  #jobFocusOutput .out-plain { color: #8b949e; }
+
+  /* ── Session history cards ── */
+  .sh-card {
+    padding: 8px 11px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 4px; margin-bottom: 4px;
+    cursor: pointer; opacity: 0.78;
+    transition: border-color 0.15s, background 0.15s, opacity 0.15s;
+  }
+  .sh-card:hover { border-color: var(--muted); opacity: 1; background: rgba(88,166,255,0.04); }
+  .sh-card.selected { border-left-color: var(--accent); opacity: 1; background: rgba(88,166,255,0.07); }
+  .sh-card-name {
+    font-family: var(--font-code); font-size: 11px;
+    font-weight: 700; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sh-card-meta {
+    font-size: 10px; color: var(--muted); margin-top: 2px;
+  }
+
+  /* ── Session history panel sizing ── */
+  #sessionHistoryPanel {
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+    max-height: 220px;
+    display: flex; flex-direction: column;
+  }
+  #sessionHistoryList { flex: 1; overflow-y: auto; padding: 6px; }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- ── Top bar ── -->
+  <header>
+    <div class="logo">&#9672; MERGEN<span id="modeBadge" class="mode-badge hidden"></span></div>
+    <div class="conn-dot" id="connDot"></div>
+
+    <div id="activeIndicator" class="hidden">
+      <span class="pulse-dot"></span>
+      <span id="activeText"></span>
+    </div>
+  </header>
+
+  <!-- ── Main two-column layout ── -->
+  <main>
+
+    <!-- LEFT PANEL -->
+    <aside id="leftPanel">
+
+      <!-- 1. ACTIVE TOOLS — sadece running job'lar, hiç yoksa gizli -->
+      <section id="activeToolsPanel" class="hidden">
+        <div class="section-hdr">
+          <span>Active Tools</span>
+          <span id="activeToolsCount" class="section-count"></span>
+        </div>
+        <div id="activeToolsList"></div>
+      </section>
+
+      <!-- 2. OPERATIONS — canlı/tamamlanmış session'lar (historical yok) -->
+      <section id="operationsPanel">
+        <div class="section-hdr">
+          <span>Operations</span>
+          <button class="section-hdr-btn" id="clearDoneBtn">Clear done</button>
+        </div>
+        <div id="operationsList">
+          <div class="empty-state">
+            <div class="es-icon">&#8801;</div>
+            <div>No operations yet</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. SESSION HISTORY — DB kayıtları, collapsible -->
+      <section id="sessionHistoryPanel">
+        <div class="section-hdr section-hdr-toggle" id="sessionHistoryToggle">
+          <span>Session History</span>
+          <span id="sessionHistoryMeta" class="section-count"></span>
+        </div>
+        <div id="sessionHistoryList" class="collapsed">
+          <div class="empty-state" style="padding:12px">
+            <div>No history</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. MEMORY — sadece learnings -->
+      <section id="memoryPanel">
+        <div class="section-hdr">
+          <span>Memory</span>
+          <button class="section-hdr-btn" id="refreshMemoryBtn">Refresh</button>
+        </div>
+        <div id="memoryList">
+          <div class="empty-state" style="padding:16px"><div>Loading...</div></div>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- RIGHT PANEL -->
+    <section id="rightPanel">
+
+      <!-- Job Focus Mode container (default hidden) -->
+      <div id="jobFocusContainer" class="hidden">
+        <div id="jobFocusHeader">
+          <span class="pulse-dot" id="jfhPulse"></span>
+          <span id="jfhTool" class="jfh-tool mono"></span>
+          <span id="jfhArrow" class="jfh-arrow">→</span>
+          <span id="jfhTarget" class="jfh-target mono"></span>
+          <span id="jfhMeta" class="jfh-meta"></span>
+          <button class="jfh-close" id="jfhClose" title="Back to session">×</button>
+        </div>
+        <div id="jobFocusOutput" class="mono"></div>
+      </div>
+
+      <div id="sessionHeader">
+        <span class="sh-title" id="shTitle">Select an operation</span>
+        <span class="sh-meta" id="shMeta"></span>
+      </div>
+
+      <div id="stepsList">
+        <div class="empty-state">
+          <div class="es-icon">&#9210;</div>
+          <div>No steps yet</div>
+        </div>
+      </div>
+
+      <div id="findingsPanel">
+        <div class="section-hdr">
+          <span>Findings</span>
+          <span id="findingsCount" style="font-family:var(--font-code);font-size:10px;color:var(--accent)"></span>
+        </div>
+        <div id="findingsList">
+          <div class="empty-state" style="padding:16px">
+            <div>No findings for this session</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script>
+    'use strict';
+
+    // ── State ──────────────────────────────────────────────────────────────────
+    let ws = null;
+    let wsRetryCount = 0;
+    let wsRetryTimer = null;
+
+    // sessions: { sessionName: { steps: [...], findings: [...] } }
+    const sessions = {};
+    // jobs: { jobId: jobObj }   (live WS jobs, keyed by job id)
+    const jobs = {};
+    // job output lines: { jobId: [lines] }
+    const jobOutputs = {};
+    // map jobId → sessionName
+    const jobSession = {};
+
+    let selectedSession = null;  // session name currently shown on right
+    let activeSession = null;    // session currently running (for indicator)
+    let activeJobId = null;      // most recent running job id
+    let selectedJobId = null;   // job focus mode
+    let rightPanelMode = 'session'; // 'session' | 'job'
+
+    const jobStartTimes = {};
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function esc(s) {
+      return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function fmtTime(sec) {
+      const m = Math.floor(sec / 60), s = sec % 60;
+      return m > 0 ? `${m}m ${s}s` : `${s}s`;
+    }
+
+    function setModeBadge(mode, label) {
+      const badge = document.getElementById('modeBadge');
+      if (!badge) return;
+      // Remove old mode classes
+      badge.className = 'mode-badge mode-' + (mode || 'default');
+      badge.textContent = label || (mode ? mode.toUpperCase() : 'DEFAULT');
+      badge.classList.remove('hidden');
+    }
+
+    function colorizeOutputLine(line) {
+      const s = esc(line);
+      if (/\[INF\]|\[INFO\]/.test(line)) return `<span class="out-info">${s}</span>`;
+      if (/\[WRN\]|\[WARN\]|warning/i.test(line)) return `<span class="out-warn">${s}</span>`;
+      if (/\[ERR\]|\[ERROR\]|error|fail/i.test(line)) return `<span class="out-err">${s}</span>`;
+      if (/\[done\]|✓|found|open/.test(line)) return `<span class="out-done">${s}</span>`;
+      return `<span class="out-plain">${s}</span>`;
+    }
+
+    function sevFromScore(score) {
+      if (score >= 9) return 'p1';
+      if (score >= 7) return 'p1';
+      if (score >= 5) return 'p2';
+      if (score >= 3) return 'p3';
+      return 'p4';
+    }
+
+    function sevLabel(score) {
+      if (score >= 7) return 'P1';
+      if (score >= 5) return 'P2';
+      if (score >= 3) return 'P3';
+      return 'P4';
+    }
+
+    // ── WebSocket ──────────────────────────────────────────────────────────────
+    function connect() {
+      if (wsRetryTimer) { clearTimeout(wsRetryTimer); wsRetryTimer = null; }
+      ws = new WebSocket(`ws://${location.host}/ws`);
+
+      ws.onopen = () => {
+        wsRetryCount = 0;
+        setConnState('live');
+      };
+
+      ws.onclose = () => {
+        setConnState('dead');
+        const delay = Math.min(1000 * Math.pow(2, wsRetryCount), 30000);
+        wsRetryCount++;
+        wsRetryTimer = setTimeout(connect, delay);
+      };
+
+      ws.onerror = () => { ws.close(); };
+
+      ws.onmessage = e => {
+        try { handleEvent(JSON.parse(e.data)); } catch (_) { }
+      };
+    }
+
+    function setConnState(state) {
+      const dot = document.getElementById('connDot');
+      dot.className = 'conn-dot' + (state === 'live' ? ' live' : state === 'dead' ? ' dead' : '');
+    }
+
+    // ── WS event handler ───────────────────────────────────────────────────────
+    function handleEvent(msg) {
+      switch (msg.event) {
+
+        case 'init': {
+          // Restore mode badge from previous session
+          const _savedMode  = localStorage.getItem('mergen_mode');
+          const _savedLabel = localStorage.getItem('mergen_mode_label');
+          if (_savedMode) setModeBadge(_savedMode, _savedLabel);
+          // Restore any jobs the server already knows about
+          (msg.jobs || []).forEach(j => {
+            jobs[j.id] = j;
+            const sName = j.session || j.target || 'default';
+            jobSession[j.id] = sName;
+            if (!sessions[sName]) sessions[sName] = { steps: [], findings: [] };
+            // Add step if not already present
+            if (!sessions[sName].steps.find(s => s.jobId === j.id)) {
+              sessions[sName].steps.push(makeStep(j));
+            }
+          });
+          renderOperationsList();
+          renderActiveTools();
+          // Auto-select most recent running job's session
+          const running = Object.values(jobs).find(j => j.status === 'running');
+          if (running) {
+            autoSelectSession(jobSession[running.id], running);
+          } else if (Object.keys(sessions).length > 0) {
+            autoSelectSession(Object.keys(sessions)[0], null);
+          }
+          break;
+        }
+
+        case 'job_started': {
+          const j = msg.job;
+          jobs[j.id] = j;
+          const sName = j.session || j.target || 'default';
+          jobSession[j.id] = sName;
+          if (!sessions[sName]) sessions[sName] = { steps: [], findings: [] };
+          // Avoid duplicate steps
+          if (!sessions[sName].steps.find(s => s.jobId === j.id)) {
+            sessions[sName].steps.push(makeStep(j));
+          }
+          if (!jobStartTimes[j.id]) jobStartTimes[j.id] = Date.now();
+          activeJobId = j.id;
+          activeSession = sName;
+          showActiveIndicator(j.tool, j.target);
+          renderOperationsList();
+          renderActiveTools();
+          if (!selectedSession) autoSelectSession(sName, j);
+          else if (selectedSession === sName) renderSteps();
+          break;
+        }
+
+        case 'job_output': {
+          const jid = msg.job_id;
+          if (!jobOutputs[jid]) jobOutputs[jid] = [];
+          jobOutputs[jid].push(msg.line || msg.data || '');
+          // Update step live output if expanded
+          if (selectedSession && jobSession[jid] === selectedSession) {
+            appendStepOutput(jid, msg.line || msg.data || '');
+          }
+          break;
+        }
+
+        // also handle old 'output' event type from server
+        case 'output': {
+          const jid = msg.job_id;
+          if (!jobOutputs[jid]) jobOutputs[jid] = [];
+          jobOutputs[jid].push(msg.line || '');
+          if (selectedSession && jobSession[jid] === selectedSession) {
+            appendStepOutput(jid, msg.line || '');
+          }
+          break;
+        }
+
+        case 'job_done': {
+          const j = msg.job;
+          jobs[j.id] = j;
+          updateStepStatus(j.id, 'done');
+          renderOperationsList();
+          renderActiveTools();
+          // Fetch findings for the session
+          const sName = jobSession[j.id] || j.session || j.target;
+          if (sName) fetchFindings(sName);
+          if (activeJobId === j.id) {
+            activeJobId = null;
+            // Check if any other running jobs
+            const stillRunning = Object.values(jobs).find(x => x.status === 'running');
+            if (!stillRunning) hideActiveIndicator();
+            else showActiveIndicator(stillRunning.tool, stillRunning.target);
+          }
+          // Update mode badge when set_attack_mode completes
+          if (j.tool === 'set_attack_mode' || (j.result && typeof j.result === 'object' && j.result.mode && j.result.label)) {
+            try {
+              const _res = typeof j.result === 'string' ? JSON.parse(j.result) : (j.result || {});
+              if (_res.mode) {
+                localStorage.setItem('mergen_mode', _res.mode);
+                localStorage.setItem('mergen_mode_label', _res.label || _res.mode);
+                setModeBadge(_res.mode, _res.label || _res.mode);
+              }
+            } catch(_e) {}
+          }
+          break;
+        }
+
+        case 'job_killed': {
+          const j = msg.job;
+          jobs[j.id] = j;
+          updateStepStatus(j.id, 'killed');
+          renderOperationsList();
+          renderActiveTools();
+          if (activeJobId === j.id) {
+            activeJobId = null;
+            const stillRunning = Object.values(jobs).find(x => x.status === 'running');
+            if (!stillRunning) hideActiveIndicator();
+            else showActiveIndicator(stillRunning.tool, stillRunning.target);
+          }
+          break;
+        }
+
+        case 'job_error': {
+          const j = msg.job || {};
+          if (j.id) {
+            if (jobs[j.id]) jobs[j.id].status = 'failed';
+            updateStepStatus(j.id, 'failed');
+            renderOperationsList();
+            renderActiveTools();
+          }
+          break;
+        }
+
+        case 'system_stats':
+          // intentionally ignored — no CPU/RAM display
+          break;
+      }
+    }
+
+    // ── Step helpers ───────────────────────────────────────────────────────────
+    function makeStep(j) {
+      return {
+        jobId: j.id,
+        tool: j.tool || '?',
+        target: j.target || '',
+        status: j.status || 'queued',
+        elapsed: j.elapsed || 0,
+      };
+    }
+
+    function updateStepStatus(jobId, status) {
+      const sName = jobSession[jobId];
+      if (!sName || !sessions[sName]) return;
+      const step = sessions[sName].steps.find(s => s.jobId === jobId);
+      if (step) {
+        step.status = status;
+        if (jobs[jobId]) step.elapsed = jobs[jobId].elapsed || 0;
+      }
+      if (selectedSession === sName) renderSteps();
+    }
+
+    // ── Finding display helpers ────────────────────────────────────────────────
+    function _findingTitle(item) {
+      if (typeof item === 'string') return item;
+      // nuclei / vuln scan
+      if (item.name) return item.name;
+      // nikto
+      if (item.finding) return item.finding.slice(0, 120);
+      // nmap
+      if (item.port != null && item.service) return `Port ${item.port}/${item.service}${item.product ? ' — ' + item.product : ''}`;
+      if (item.port != null) return `Port ${item.port} ${item.product || ''}`.trim();
+      // whatweb
+      if (item.technology) return `${item.technology}${item.version ? ': ' + item.version : ''}`;
+      // waybackurls / gau
+      if (item.url) return item.url;
+      // subfinder / crtsh
+      if (item.host) return item.host;
+      if (item.subdomain) return item.subdomain;
+      // ffuf / feroxbuster
+      if (item.path) return item.path;
+      if (item.matched_at) return item.matched_at;
+      // generic
+      if (item.title) return item.title;
+      if (item.message) return item.message;
+      return JSON.stringify(item).slice(0, 120);
+    }
+
+    function _findingDetail(item) {
+      if (typeof item !== 'object' || !item) return '';
+      if (item.severity) return item.severity;
+      if (item.version) return item.version;
+      if (item.cvss != null && item.cvss > 0) return `CVSS ${item.cvss}`;
+      return '';
+    }
+
+    // ── Fetch findings ─────────────────────────────────────────────────────────
+    async function fetchFindings(sessionName) {
+      try {
+        const res = await fetch(`/api/sessions/${encodeURIComponent(sessionName)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!sessions[sessionName]) sessions[sessionName] = { steps: [], findings: [] };
+        // Flatten findings
+        const flat = [];
+        (data.findings || []).forEach(f => {
+          (f.findings || []).forEach(item => {
+            flat.push({
+              tool: f.tool || '',
+              target: f.target || '',
+              risk: f.risk_score || 0,
+              title: _findingTitle(item),
+              detail: _findingDetail(item),
+              time: f.created_at || '',
+            });
+          });
+        });
+        sessions[sessionName].findings = flat;
+        if (selectedSession === sessionName) renderFindings();
+      } catch (_) { }
+    }
+
+    // ── Fetch memory/learnings ─────────────────────────────────────────────────
+    async function loadMemory() {
+      let scans = [], learnings = [];
+      try {
+        const [scansRes, learningsRes] = await Promise.allSettled([
+          fetch('/api/findings/recent'),
+          fetch('/api/memory/learnings')
+        ]);
+        if (scansRes.status === 'fulfilled' && scansRes.value.ok) {
+          const d = await scansRes.value.json();
+          scans = d.items || [];
+        }
+        if (learningsRes.status === 'fulfilled' && learningsRes.value.ok) {
+          const d = await learningsRes.value.json();
+          learnings = d.learnings || d.items || (Array.isArray(d) ? d : []);
+        }
+      } catch (_) { }
+      renderMemory(scans, learnings);
+    }
+
+    // ── Fetch jobs on load ─────────────────────────────────────────────────────
+    async function fetchJobs() {
+      try {
+        const res = await fetch('/api/jobs');
+        if (!res.ok) return;
+        const data = await res.json();
+        const jobList = Array.isArray(data) ? data : (data.jobs || []);
+        jobList.forEach(j => {
+          if (jobs[j.id]) return; // already tracked via WS init
+          jobs[j.id] = j;
+          const sName = j.session || j.target || 'default';
+          jobSession[j.id] = sName;
+          if (!sessions[sName]) sessions[sName] = { steps: [], findings: [] };
+          if (!sessions[sName].steps.find(s => s.jobId === j.id)) {
+            sessions[sName].steps.push(makeStep(j));
+          }
+        });
+        renderOperationsList();
+        renderActiveTools();
+        if (!selectedSession && Object.keys(sessions).length > 0) {
+          autoSelectSession(Object.keys(sessions)[0], null);
+        }
+      } catch (_) { }
+    }
+
+    // ── Load historical sessions from DB ─────────────────────────────────────
+    async function fetchDbSessions() {
+      try {
+        const res = await fetch('/api/sessions');
+        if (!res.ok) return;
+        const data = await res.json();
+        let added = false;
+        (data.sessions || []).forEach(s => {
+          if (!sessions[s.name]) {
+            sessions[s.name] = {
+              steps: [], findings: [],
+              isHistorical: true,
+              scan_count: s.scan_count || 0,
+              last_scan: s.last_scan || ''
+            };
+            added = true;
+          }
+        });
+        if (added) {
+          renderOperationsList();
+          if (!selectedSession && Object.keys(sessions).length > 0) {
+            autoSelectSession(Object.keys(sessions)[0], null);
+          }
+        }
+      } catch (_) { }
+    }
+
+    // ── Active indicator ───────────────────────────────────────────────────────
+    function showActiveIndicator(tool, target) {
+      const ind = document.getElementById('activeIndicator');
+      ind.classList.remove('hidden');
+      document.getElementById('activeText').textContent = `${tool} → ${target}`;
+    }
+
+    function hideActiveIndicator() {
+      document.getElementById('activeIndicator').classList.add('hidden');
+    }
+
+    // ── Auto-select session ────────────────────────────────────────────────────
+    function autoSelectSession(sName, job) {
+      selectedJobId = null;
+      rightPanelMode = 'session';
+      document.getElementById('jobFocusContainer').classList.add('hidden');
+      document.getElementById('sessionHeader').classList.remove('hidden');
+      document.getElementById('stepsList').classList.remove('hidden');
+      document.getElementById('findingsPanel').classList.remove('hidden');
+      selectedSession = sName;
+      renderOperationsList();
+      updateSessionHeader(sName, job);
+      renderSteps();
+      renderFindings();
+      fetchFindings(sName);
+    }
+
+    function selectSession(sName) {
+      selectedJobId = null;
+      rightPanelMode = 'session';
+      document.getElementById('jobFocusContainer').classList.add('hidden');
+      document.getElementById('sessionHeader').classList.remove('hidden');
+      document.getElementById('stepsList').classList.remove('hidden');
+      document.getElementById('findingsPanel').classList.remove('hidden');
+      selectedSession = sName;
+      renderOperationsList();
+      const activeJob = Object.values(jobs).find(j => (j.session === sName || j.target === sName) && j.status === 'running');
+      updateSessionHeader(sName, activeJob || null);
+      renderSteps();
+      renderFindings();
+      fetchFindings(sName);
+    }
+
+    function selectJob(jobId) {
+      const j = jobs[jobId];
+      if (!j) return;
+
+      selectedJobId = jobId;
+      rightPanelMode = 'job';
+
+      renderActiveTools();
+      renderOperationsList();
+
+      // Hide session view, show job focus
+      document.getElementById('sessionHeader').classList.add('hidden');
+      document.getElementById('stepsList').classList.add('hidden');
+      document.getElementById('findingsPanel').classList.add('hidden');
+      document.getElementById('jobFocusContainer').classList.remove('hidden');
+
+      // Fill header
+      document.getElementById('jfhTool').textContent   = (j.tool || '?').toUpperCase();
+      document.getElementById('jfhTarget').textContent = j.target || '';
+      document.getElementById('jfhMeta').textContent   = `#${jobId}`;
+
+      // Fill output from cache
+      const outEl = document.getElementById('jobFocusOutput');
+      const lines = jobOutputs[jobId] || [];
+      outEl.innerHTML = lines.map(colorizeOutputLine).join('\n');
+      outEl.scrollTop = outEl.scrollHeight;
+
+      _fetchJobOutputIfNeeded(jobId);
+    }
+
+    function closeJobFocus() {
+      rightPanelMode = 'session';
+      selectedJobId = null;
+
+      document.getElementById('jobFocusContainer').classList.add('hidden');
+      document.getElementById('sessionHeader').classList.remove('hidden');
+      document.getElementById('stepsList').classList.remove('hidden');
+      document.getElementById('findingsPanel').classList.remove('hidden');
+
+      renderActiveTools();
+    }
+
+    // ── Session header ─────────────────────────────────────────────────────────
+    function updateSessionHeader(sName, job) {
+      document.getElementById('shTitle').textContent = sName || 'No session';
+      const meta = document.getElementById('shMeta');
+      if (job) {
+        meta.textContent = `#${job.id} — ${job.status}`;
+      } else {
+        const sess = sessions[sName];
+        const steps = sess ? sess.steps.length : 0;
+        meta.textContent = steps ? `${steps} step${steps !== 1 ? 's' : ''}` : '';
+      }
+    }
+
+    // ── Render active tools panel ──────────────────────────────────────────────
+    function renderActiveTools() {
+      const panel  = document.getElementById('activeToolsPanel');
+      const list   = document.getElementById('activeToolsList');
+      const countEl = document.getElementById('activeToolsCount');
+
+      const runningJobs = Object.values(jobs).filter(j => j.status === 'running');
+
+      if (!runningJobs.length) {
+        panel.classList.add('hidden');
+        countEl.textContent = '';
+        return;
+      }
+      panel.classList.remove('hidden');
+      countEl.textContent = runningJobs.length;
+
+      list.innerHTML = runningJobs.map(j => {
+        const sec = jobStartTimes[j.id]
+          ? Math.floor((Date.now() - jobStartTimes[j.id]) / 1000)
+          : (j.elapsed || 0);
+        const isSelected = selectedJobId === String(j.id);
+        return `<div class="at-card${isSelected ? ' selected' : ''}" data-jobid="${j.id}">
+      <div class="at-top">
+        <span class="at-tool">
+          <span class="pulse-dot" style="width:6px;height:6px"></span>
+          ${esc(j.tool.toUpperCase())}
+        </span>
+        <span class="at-elapsed mono">${fmtTime(sec)}</span>
+        <button class="at-kill" data-killjob="${j.id}" title="Kill">&#9632;</button>
+      </div>
+      <div class="at-target">${esc(j.target || '')}</div>
+      <div class="at-progress"><div class="at-progress-bar"></div></div>
+    </div>`;
+      }).join('');
+    }
+
+    // ── Render operations list (left panel) ───────────────────────────────────
+    function renderOperationsList() {
+      const container = document.getElementById('operationsList');
+      const sessionNames = Object.keys(sessions).filter(s => !sessions[s].isHistorical);
+
+      if (!sessionNames.length) {
+        container.innerHTML = `<div class="empty-state"><div class="es-icon">&#8801;</div><div>No operations yet</div></div>`;
+        return;
+      }
+
+      // Build one card per session, showing last job status
+      const html = sessionNames.slice().reverse().map(sName => {
+        const sess = sessions[sName];
+        const isHistorical = !!sess.isHistorical;
+
+        // Find most recent job for this session
+        const sessionJobs = Object.values(jobs).filter(j => jobSession[j.id] === sName);
+        const lastJob = sessionJobs.sort((a, b) => (b.id > a.id ? 1 : -1))[0];
+        const status = lastJob ? lastJob.status : 'done';
+        const tool = lastJob ? lastJob.tool : (sess.steps[0] ? sess.steps[0].tool : 'scan');
+        const steps = sess.steps.length;
+        const findings = sess.findings ? sess.findings.length : 0;
+        const isSelected = selectedSession === sName;
+        const isRunning = status === 'running';
+
+        let sec = 0;
+        if (lastJob) {
+          if (isRunning && jobStartTimes[lastJob.id]) {
+            sec = Math.floor((Date.now() - jobStartTimes[lastJob.id]) / 1000);
+          } else {
+            sec = lastJob.elapsed || 0;
+          }
+        }
+
+        const sbCls = `sb-${status === 'failed' ? 'failed' : status === 'killed' ? 'killed' : status === 'running' ? 'running' : 'done'}`;
+        const cardStatus = `status-${status === 'failed' ? 'failed' : status === 'killed' ? 'killed' : status === 'running' ? 'running' : 'done'}`;
+        const histDate = isHistorical && sess.last_scan ? sess.last_scan.slice(0, 10) : '';
+
+        return `<div class="op-card ${cardStatus}${isSelected ? ' selected' : ''}${isHistorical ? ' op-card-hist' : ''}"
+                   data-session="${esc(sName)}"
+         >
+        <div class="oc-top">
+          <span class="oc-tool mono">${esc(isHistorical && !lastJob ? 'DB' : tool.toUpperCase())}</span>
+          ${isHistorical && !isRunning
+            ? `<span class="status-badge sb-done" style="opacity:0.55;font-size:9px">HIST</span>`
+            : isRunning
+              ? `<span class="status-badge sb-running" style="display:flex;align-items:center;gap:4px"><span class="pulse-dot" style="width:6px;height:6px"></span>RUNNING</span>`
+              : `<span class="status-badge ${sbCls}">${status}</span>`}
+        </div>
+        <div class="oc-target mono">${esc(sName)}</div>
+        <div class="oc-meta">
+          ${isHistorical && !lastJob
+            ? `<span>${sess.scan_count || 0} scan${(sess.scan_count || 0) !== 1 ? 's' : ''}</span>${histDate ? `<span>${histDate}</span>` : ''}`
+            : `<span>${steps} step${steps !== 1 ? 's' : ''}</span>
+               ${findings ? `<span style="color:var(--accent)">${findings} finding${findings !== 1 ? 's' : ''}</span>` : ''}
+               ${sec ? `<span>${fmtTime(sec)}</span>` : ''}`}
+        </div>
+      </div>`;
+      }).join('');
+
+      container.innerHTML = html;
+      renderSessionHistory();
+    }
+
+    // ── Render steps (right panel) ─────────────────────────────────────────────
+    function renderSteps() {
+      const container = document.getElementById('stepsList');
+      if (!selectedSession || !sessions[selectedSession]) {
+        container.innerHTML = `<div class="empty-state"><div class="es-icon">&#9210;</div><div>No steps yet</div></div>`;
+        return;
+      }
+
+      const steps = sessions[selectedSession].steps;
+      if (!steps.length) {
+        const sess = sessions[selectedSession];
+        const msg = sess && sess.isHistorical
+          ? `Historical session &mdash; ${sess.scan_count || 0} scan${(sess.scan_count || 0) !== 1 ? 's' : ''}, see findings panel`
+          : 'No steps yet';
+        container.innerHTML = `<div class="empty-state"><div class="es-icon">&#9744;</div><div>${msg}</div></div>`;
+        return;
+      }
+
+      container.innerHTML = steps.map(step => {
+        const st = step.status;
+        const stepCls = `step-${st === 'queued' ? 'pending' : st}`;
+        let iconHtml;
+        if (st === 'running') {
+          iconHtml = `<span class="pulse-dot"></span>`;
+        } else if (st === 'done') {
+          iconHtml = `<span class="step-icon-done">&#10003;</span>`;
+        } else if (st === 'failed' || st === 'error') {
+          iconHtml = `<span class="step-icon-failed">&#10007;</span>`;
+        } else if (st === 'killed') {
+          iconHtml = `<span class="step-icon-killed">&#9632;</span>`;
+        } else {
+          iconHtml = `<span class="step-icon-pending">&#9711;</span>`;
+        }
+
+        const sec = st === 'running' && jobStartTimes[step.jobId]
+          ? Math.floor((Date.now() - jobStartTimes[step.jobId]) / 1000)
+          : (step.elapsed || 0);
+
+        const lines = (jobOutputs[step.jobId] || []).length;
+        const hint = st === 'running' ? '' : (lines ? ' &#9660;' : '');
+
+        return `<div class="step-item ${stepCls}" data-job="${step.jobId}" onclick="toggleStepOutput(this, '${step.jobId}')">
+        <div class="step-icon">${iconHtml}</div>
+        <div class="step-body">
+          <div class="step-tool mono">${esc(step.tool.toUpperCase())}${hint}</div>
+          <div class="step-target mono">${esc(step.target)}</div>
+          <div class="step-meta">#${step.jobId}${sec ? ` &middot; ${fmtTime(sec)}` : ''}${lines ? ` &middot; ${lines} lines` : ''}</div>
+          <div class="step-output" id="output-${step.jobId}"></div>
+        </div>
+      </div>`;
+      }).join('');
+
+      // Auto-expand output for all currently running steps — no click needed
+      _openRunningOutputs();
+    }
+
+    // Fetch output_lines from server if our local buffer is empty (job started before WS connected)
+    async function _fetchJobOutputIfNeeded(jobId) {
+      if (jobOutputs[jobId] && jobOutputs[jobId].length > 0) return;
+      try {
+        const res = await fetch(`/api/jobs/${jobId}`);
+        if (!res.ok) return;
+        const jdata = await res.json();
+        if (jdata.output_lines && jdata.output_lines.length) {
+          jobOutputs[jobId] = jdata.output_lines;
+        }
+      } catch (_) { }
+    }
+
+    async function _openRunningOutputs() {
+      if (!selectedSession || !sessions[selectedSession]) return;
+      for (const step of sessions[selectedSession].steps) {
+        const j = jobs[step.jobId];
+        if (j && j.status === 'running') {
+          // Fetch historical output if we have nothing buffered locally
+          await _fetchJobOutputIfNeeded(step.jobId);
+          const outEl = document.getElementById(`output-${step.jobId}`);
+          if (outEl && !outEl.classList.contains('open')) {
+            outEl.textContent = (jobOutputs[step.jobId] || []).join('\n');
+            outEl.classList.add('open');
+            outEl.scrollTop = outEl.scrollHeight;
+          }
+        }
+      }
+    }
+
+    async function toggleStepOutput(el, jobId) {
+      const outEl = document.getElementById(`output-${jobId}`);
+      if (!outEl) return;
+      if (outEl.classList.contains('open')) {
+        outEl.classList.remove('open');
+        return;
+      }
+      // For done/failed jobs: fetch from server if buffer is empty (missed WS stream)
+      await _fetchJobOutputIfNeeded(jobId);
+      const lines = jobOutputs[jobId] || [];
+      outEl.textContent = lines.length ? lines.join('\n') : '(no output)';
+      outEl.classList.add('open');
+      outEl.scrollTop = outEl.scrollHeight;
+    }
+
+    function appendStepOutput(jobId, line) {
+      // Job focus mode: also write to focus output
+      if (rightPanelMode === 'job' && selectedJobId === String(jobId)) {
+        const focusEl = document.getElementById('jobFocusOutput');
+        if (focusEl) {
+          focusEl.insertAdjacentHTML('beforeend', (focusEl.innerHTML ? '\n' : '') + colorizeOutputLine(line));
+          focusEl.scrollTop = focusEl.scrollHeight;
+        }
+      }
+      const outEl = document.getElementById(`output-${jobId}`);
+      if (!outEl) return;
+      if (!outEl.classList.contains('open')) {
+        // Auto-open running jobs so output is always visible without clicking
+        const j = jobs[jobId];
+        if (!j || j.status !== 'running') return;
+        // Populate with full buffer (line is already pushed into jobOutputs)
+        outEl.textContent = (jobOutputs[jobId] || []).join('\n');
+        outEl.classList.add('open');
+        outEl.scrollTop = outEl.scrollHeight;
+        return; // line already included via join above
+      }
+      outEl.textContent += (outEl.textContent ? '\n' : '') + line;
+      outEl.scrollTop = outEl.scrollHeight;
+    }
+
+    // ── Render findings ────────────────────────────────────────────────────────
+    function renderFindings() {
+      const container = document.getElementById('findingsList');
+      const countEl = document.getElementById('findingsCount');
+      if (!selectedSession || !sessions[selectedSession]) {
+        container.innerHTML = `<div class="empty-state" style="padding:16px"><div>No findings for this session</div></div>`;
+        countEl.textContent = '';
+        return;
+      }
+
+      const findings = sessions[selectedSession].findings || [];
+      countEl.textContent = findings.length ? `${findings.length} found` : '';
+
+      if (!findings.length) {
+        container.innerHTML = `<div class="empty-state" style="padding:16px"><div>No findings for this session</div></div>`;
+        return;
+      }
+
+      // Sort by risk desc
+      const sorted = [...findings].sort((a, b) => b.risk - a.risk);
+      container.innerHTML = sorted.map(f => {
+        const sev = sevLabel(f.risk);
+        const cls = `sev-${sevFromScore(f.risk)}`;
+        return `<div class="finding-item">
+        <span class="sev-badge ${cls}">${sev}</span>
+        <div class="finding-body">
+          <div class="finding-title">${esc(f.title)}</div>
+          <div class="finding-meta">${esc(f.tool)}${f.detail ? ` &middot; ${esc(f.detail)}` : ''}${f.risk ? ` &middot; risk ${f.risk}/10` : ''}</div>
+        </div>
+      </div>`;
+      }).join('');
+    }
+
+    // ── Render session history ─────────────────────────────────────────────────
+    function renderSessionHistory() {
+      const list   = document.getElementById('sessionHistoryList');
+      const metaEl = document.getElementById('sessionHistoryMeta');
+
+      const histNames = Object.keys(sessions).filter(s => sessions[s].isHistorical);
+      metaEl.textContent = histNames.length ? `${histNames.length}` : '';
+
+      if (!histNames.length) {
+        list.innerHTML = `<div class="empty-state" style="padding:12px"><div>No history</div></div>`;
+        return;
+      }
+
+      list.innerHTML = histNames.slice().reverse().map(sName => {
+        const sess = sessions[sName];
+        const isSelected = selectedSession === sName && rightPanelMode === 'session';
+        const date = sess.last_scan ? sess.last_scan.slice(0, 10) : '';
+        return `<div class="sh-card${isSelected ? ' selected' : ''}" data-hist-session="${esc(sName)}">
+          <div class="sh-card-name">${esc(sName)}</div>
+          <div class="sh-card-meta">${sess.scan_count || 0} scans${date ? ' · ' + date : ''}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // ── Render memory ──────────────────────────────────────────────────────────
+    function renderMemory(scans, learnings) {
+      const container = document.getElementById('memoryList');
+      let html = '';
+
+      // ── Recent Scans removed — history shown in SESSION HISTORY panel ──────────
+
+      // ── Learnings (from memory_learnings table) ──────────────────────────────
+      if (learnings && learnings.length > 0) {
+        html += `<div class="memory-section-title">Learnings</div>`;
+        html += learnings.slice(0, 30).map(item => {
+          if (typeof item === 'string') {
+            return `<div class="memory-item"><div class="mi-target">${esc(item)}</div></div>`;
+          }
+          const status = item.success ? '✓' : '✗';
+          const statusColor = item.success ? 'var(--done)' : 'var(--p1)';
+          const vuln = item.vuln_type || item.learning || '?';
+          const tech = item.tech_stack ? `[${item.tech_stack}]` : '';
+          const tgt = item.target ? item.target.replace(/https?:\/\//, '').split('/')[0] : '';
+          const tool = item.tool || '';
+          const date = item.created_at
+            ? new Date(item.created_at * 1000).toISOString().slice(0, 10)
+            : '';
+          return `<div class="memory-item">
+          <div class="mi-target" style="display:flex;gap:6px;align-items:center">
+            <span style="color:${statusColor};font-weight:700">${status}</span>
+            <span>${esc(vuln)}</span>
+            ${tech ? `<span style="color:var(--muted);font-size:11px">${esc(tech)}</span>` : ''}
+          </div>
+          <div class="mi-meta">${tgt ? esc(tgt) + ' &middot; ' : ''}${tool ? esc(tool) + ' &middot; ' : ''}${date}</div>
+        </div>`;
+        }).join('');
+      }
+
+      container.innerHTML = html || `<div class="empty-state" style="padding:16px"><div>No memory yet</div></div>`;
+    }
+
+
+    // ── Session list click (delegated, avoids onclick quoting issues) ──────────
+    document.getElementById('operationsList').addEventListener('click', e => {
+      const card = e.target.closest('.op-card[data-session]');
+      if (card) selectSession(card.dataset.session);
+    });
+
+    document.getElementById('activeToolsList').addEventListener('click', e => {
+      // Kill button
+      const killBtn = e.target.closest('[data-killjob]');
+      if (killBtn) {
+        e.stopPropagation();
+        const jid = killBtn.dataset.killjob;
+        fetch(`/api/jobs/${jid}/kill`, { method: 'POST' }).catch(() => {});
+        return;
+      }
+      // Card click → job focus mode
+      const card = e.target.closest('.at-card[data-jobid]');
+      if (card) selectJob(card.dataset.jobid);
+    });
+
+    document.getElementById('sessionHistoryList').addEventListener('click', e => {
+      const card = e.target.closest('[data-hist-session]');
+      if (card) selectSession(card.dataset.histSession);
+    });
+
+    // ── Clear done ─────────────────────────────────────────────────────────────
+    document.getElementById('clearDoneBtn').addEventListener('click', () => {
+      const doneStatuses = ['done', 'failed', 'killed'];
+      // Remove sessions where all jobs are done
+      Object.keys(sessions).forEach(sName => {
+        if (sessions[sName] && sessions[sName].isHistorical) return;
+        const sessionJobs = Object.values(jobs).filter(j => jobSession[j.id] === sName);
+        const allDone = sessionJobs.length > 0 && sessionJobs.every(j => doneStatuses.includes(j.status));
+        const hasRunning = sessionJobs.some(j => j.status === 'running');
+        if (allDone && !hasRunning) {
+          if (selectedSession === sName) {
+            selectedSession = null;
+            document.getElementById('shTitle').textContent = 'Select an operation';
+            document.getElementById('shMeta').textContent = '';
+            document.getElementById('stepsList').innerHTML = `<div class="empty-state"><div class="es-icon">&#9210;</div><div>No steps yet</div></div>`;
+            document.getElementById('findingsList').innerHTML = `<div class="empty-state" style="padding:16px"><div>No findings for this session</div></div>`;
+            document.getElementById('findingsCount').textContent = '';
+          }
+          delete sessions[sName];
+          sessionJobs.forEach(j => {
+            delete jobs[j.id];
+            delete jobOutputs[j.id];
+            delete jobSession[j.id];
+          });
+        }
+      });
+      renderOperationsList();
+    });
+
+    // ── Refresh memory ─────────────────────────────────────────────────────────
+    document.getElementById('refreshMemoryBtn').addEventListener('click', loadMemory);
+
+    // ── Elapsed timer (update running cards + steps) ──────────────────────────
+    setInterval(() => {
+      const hasRunning = Object.values(jobs).some(j => j.status === 'running');
+      if (!hasRunning) return;
+      renderOperationsList();
+      renderActiveTools();
+      if (selectedSession) {
+        // Selectively update step meta text without full re-render
+        if (sessions[selectedSession]) {
+          sessions[selectedSession].steps.forEach(step => {
+            if (step.status !== 'running') return;
+            const el = document.querySelector(`.step-item[data-job="${step.jobId}"] .step-meta`);
+            if (!el) return;
+            const sec = jobStartTimes[step.jobId]
+              ? Math.floor((Date.now() - jobStartTimes[step.jobId]) / 1000)
+              : 0;
+            const lines = (jobOutputs[step.jobId] || []).length;
+            el.innerHTML = `#${step.jobId}${sec ? ` &middot; ${fmtTime(sec)}` : ''}${lines ? ` &middot; ${lines} lines` : ''}`;
+          });
+        }
+      }
+    }, 1000);
+
+    document.getElementById('sessionHistoryToggle').addEventListener('click', () => {
+      const list = document.getElementById('sessionHistoryList');
+      list.classList.toggle('collapsed');
+    });
+
+    document.getElementById('jfhClose').addEventListener('click', closeJobFocus);
+
+    // ── Boot ───────────────────────────────────────────────────────────────────
+    connect();
+    fetchJobs();
+    fetchDbSessions();
+    loadMemory();
+    renderActiveTools();
+  </script>
+</body>
+
+</html>

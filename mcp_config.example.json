@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "mergen-ai": {
+      "command": "python",
+      "args": [
+        "/path/to/mergen_mcp.py",
+        "--server",
+        "http://KALI_IP:8000"
+      ]
+    }
+  }
+}
