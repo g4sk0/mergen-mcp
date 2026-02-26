@@ -7,8 +7,8 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111%2B-009688.svg)](https://fastapi.tiangolo.com/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/Version-2.0.0-orange.svg)](https://github.com/g4sk0/mergen/releases)
-[![Plugins](https://img.shields.io/badge/Security%20Tools-44%2B-brightgreen.svg)](https://github.com/g4sk0/mergen)
+[![Version](https://img.shields.io/badge/Version-2.0.0-orange.svg)](https://github.com/g4sk0/mergen-mcp/releases)
+[![Plugins](https://img.shields.io/badge/Security%20Tools-44%2B-brightgreen.svg)](https://github.com/g4sk0/mergen-mcp)
 [![Platform](https://img.shields.io/badge/Platform-Kali%20Linux-557C94.svg)](https://www.kali.org/)
 
 **AI-native MCP server that gives Claude, Cursor, Antigravity and any MCP-compatible agent full penetration testing capabilities — autonomous planning, adaptive execution, and professional reporting across 44+ security tools.**
@@ -85,8 +85,8 @@ graph TD
 ### Automated Installation
 
 ```bash
-git clone https://github.com/g4sk0/-mcp.git
-cd -mcp
+git clone https://github.com/g4sk0/mergen-mcp.git
+cd mergen-mcp
 sudo bash install.sh
 ```
 
